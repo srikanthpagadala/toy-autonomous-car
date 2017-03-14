@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import cv2
 
-
+# drives the toy autonomous car by predicting traffic signs using a pre-trained deep neural network
 class Driver:
     
     def __init__(self, start_camera=True):
@@ -37,6 +37,7 @@ class Driver:
         if start_camera == True:
             self.camera()
         
+    # turn the car based on the identified traffic sign
     def turn_car(self, predicted_sign):
         
         if predicted_sign == "Stop":
@@ -48,53 +49,50 @@ class Driver:
         else:
             self.car.forward()
             
+    # runs a continuously loop to capture frames from the camera.
+    # processes each frame and makes a traffic sign prediction using a pre-trained deep neural network
+    # send commands to the car to stop or turn-right 0r turn-left etc
     def camera(self):
         vs = VideoStream(usePiCamera=False).start()
         time.sleep(2.0)
         
         while True:
-            # grab the frame from the threaded video stream 
-            try:
-                oframe = vs.read()
-            except:
-                continue
             
+            # grab the frame from the threaded video stream 
+            oframe = vs.read()
+            
+            # pre-process the frame and locate region of interest
             roi, annotated_frame, lt = self.pre_process(oframe)
             roi_orig = roi
+
             try:
+                # resize frame cos model expects 32x32 input image
                 roi = cv2.resize(roi, (32, 32)) 
             except:
                 continue
             
-            predicted_sign, confidence = self.predict(roi)
-            msg = "{} {}%".format(predicted_sign, confidence)
+            # make prediction
+            predicted_sign, confidence = self.predict(roi) 
             
-            # make car move
+            # make car move based on the identified traffic sign 
             self.turn_car(predicted_sign)
             
-            # show the frame
+            # show the annotated frame for visualization purposes
             annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_RGB2BGR)
+            msg = "{} {}%".format(predicted_sign, confidence)
             cv2.putText(annotated_frame, msg, (lt[0]+50, lt[1]+10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-            
             cv2.imshow("Frame", annotated_frame)
             key = cv2.waitKey(1) & 0xFF
             
             # if the `q` key was pressed, break from the loop
             if key == ord("q"):
-                cv2.imwrite("images/roi_orig.jpg", roi_orig)
-                print("saved")
                 break
             
         # do a bit of cleanup
         cv2.destroyAllWindows()
         vs.stop()
         
-    def test_predict(self, img):
-        #img, annotated_frame = self.pre_process(img)
-        img = cv2.resize(img, (32, 32)) 
-        predicted_sign, confidence = self.predict(img)
-        print("Testing: {} {}".format(predicted_sign, confidence))
-        
+    # predict the traffic sign in the input camera frame
     def predict(self, img):
         # convert to numpy array, expected input type of the model
         input = np.asarray([img])
@@ -107,6 +105,7 @@ class Driver:
 
         return predicted_sign, confidence
 
+    # preprocess the camera frame to identify region of interest (ROI)
     def pre_process(self, image):
         
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -122,7 +121,7 @@ class Driver:
         # find all contours in the image and draw ALL contours on the image
         (_, cnts, _) = cv2.findContours(auto, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
-        # loop over the contours 
+        # loop over the contours to find the contour of max area (ROI)
         roi_cnt = None
         max_area_cnt = 0
         for (i, c) in enumerate(cnts):
@@ -136,6 +135,7 @@ class Driver:
         box = cv2.minAreaRect(roi_cnt)
         box = np.int0(cv2.boxPoints(box))
 
+        # left-bottom, left-top, right-top, and right-bottom respectively
         lb = box[0]
         lt = box[1]
         rt = box[2]
@@ -144,12 +144,3 @@ class Driver:
         roi = clone[lt[1]:lb[1], lt[0]:rb[0]]
         cv2.drawContours(copy, [box], -1, (0, 0, 255), 2)
         return roi, copy, lt
-        
-if __name__ == '__main__':
-    
-    image = cv2.imread('images/turn_right.jpg')
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    
-    Driver(start_camera=False).test_predict(image)
-    
-    print("Done")
