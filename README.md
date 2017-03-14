@@ -11,6 +11,11 @@ In this project, we
     - apply DNN prediction on ROI to identify US traffic sign
 	- send appropriate command to the car to turn-left, turn-right, or stop
  
- ## Result
+## Result
  
- [![](images/toy_car.jpg)](https://youtu.be/SIbGDtLWeDI)
+[![](images/toy_car.jpg)](https://youtu.be/SIbGDtLWeDI)
+ 
+## Thank you
+
+A hearty Thank You to my partner in crime [Min Wang](https://www.linkedin.com/in/mwangaip). He got so interested in the project that he actually bought the car, assembled it and helped shoot the final video too. Thank you Min. Your deep interest in the project propelled me to not give up. Against all odds, we got our car project done! Thanks Buddy! 
+ 
